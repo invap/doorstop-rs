@@ -66,6 +66,17 @@ impl Item {
         }
     }
 
+    ///Return the nesting level (depth)
+    ///depth is 0 based.
+    /// if last element is 0 does not count as doorstop convention uses that as a mark for headers.
+    pub fn get_depht(&self) -> i32 {
+        let mut level = self.get_level_key();
+        while level.last().is_some_and(|l| 0 == *l) {
+            level.pop();
+        }
+        (level.len() - 1) as i32
+    }
+
     pub fn new(path: PathBuf) -> Result<Self, Box<dyn Error>> {
         let reader = std::fs::File::open(&path)?;
         let mut item: Item = serde_yaml::from_reader(reader).unwrap();
@@ -79,12 +90,15 @@ impl Item {
         Ok(item)
     }
 
-    pub fn get_level_key(&self) -> Vec<i32> {
-        let level = match &self.level {
-            Some(s) => s.clone(),
-            None => "0".to_string(),
-        };
+    pub fn get_level(&self) -> &str {
+        match &self.level {
+            Some(s) => s,
+            None => "0",
+        }
+    }
 
+    pub fn get_level_key(&self) -> Vec<i32> {
+        let level = self.get_level();
         level
             .split(".")
             .filter_map(|level| i32::from_str(level).ok())
@@ -168,7 +182,6 @@ mod tests {
         assert_eq!(18, files.len(), "Wrong amount of files detected")
     }
 
-
     #[test]
     fn test_deserialize_item() {
         let p = Path::new("resources/reqs/REQ004.yml");
@@ -176,6 +189,51 @@ mod tests {
         assert!(item.active.unwrap());
         assert!(!item.derived.unwrap());
         assert_eq!("REQ004", item.id.unwrap());
+    }
+
+    #[test]
+    fn test_item_get_depth_default() {
+        let item = Item {
+            id: None,
+            active: None,
+            derived: None,
+            header: None,
+            level: None,
+            normative: None,
+            reviewed: None,
+            text: None,
+        };
+        assert_eq!(0, item.get_depht());
+    }
+
+    #[test]
+    fn test_item_get_depth_1() {
+        let item = Item {
+            id: None,
+            active: None,
+            derived: None,
+            header: None,
+            level: Some("2.10".to_string()),
+            normative: None,
+            reviewed: None,
+            text: None,
+        };
+        assert_eq!(1, item.get_depht());
+    }
+
+    #[test]
+    fn test_item_get_depth_0() {
+        let item = Item {
+            id: None,
+            active: None,
+            derived: None,
+            header: None,
+            level: Some("2.1".to_string()),
+            normative: None,
+            reviewed: None,
+            text: None,
+        };
+        assert_eq!(0, item.get_depht());
     }
 
     #[test]
