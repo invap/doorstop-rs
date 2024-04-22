@@ -69,7 +69,7 @@ impl Item {
     ///Return the nesting level (depth)
     ///depth is 0 based.
     /// if last element is 0 does not count as doorstop convention uses that as a mark for headers.
-    pub fn get_depht(&self) -> i32 {
+    pub fn get_depth(&self) -> i32 {
         let mut level = self.get_level_key();
         while level.last().is_some_and(|l| 0 == *l) {
             level.pop();
@@ -93,7 +93,7 @@ impl Item {
     pub fn get_level(&self) -> &str {
         match &self.level {
             Some(s) => s,
-            None => "0",
+            None => "1",
         }
     }
 
@@ -203,7 +203,7 @@ mod tests {
             reviewed: None,
             text: None,
         };
-        assert_eq!(0, item.get_depht());
+        assert_eq!(0, item.get_depth());
     }
 
     #[test]
@@ -218,7 +218,7 @@ mod tests {
             reviewed: None,
             text: None,
         };
-        assert_eq!(1, item.get_depht());
+        assert_eq!(1, item.get_depth());
     }
 
     #[test]
@@ -228,12 +228,12 @@ mod tests {
             active: None,
             derived: None,
             header: None,
-            level: Some("2.1".to_string()),
+            level: Some("2.0".to_string()),
             normative: None,
             reviewed: None,
             text: None,
         };
-        assert_eq!(0, item.get_depht());
+        assert_eq!(0, item.get_depth());
     }
 
     #[test]
