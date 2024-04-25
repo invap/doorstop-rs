@@ -2,6 +2,14 @@
 name = "doorstop-rs"
 version = "0.1.0"
 edition = "2021"
+license = "AGPL-3.0-or-later"
+description= "Library for reading doorstop documents"
+homepage= "https://github.com/invap/doorstop-rs"
+repository= "https://github.com/invap/doorstop-rs"
+readme= "README.md"
+keywords=["Doorstop","Requirements", "Deserialization"]
+authors= ["Juan Ignacio Vaccarezza <jivaccarezza@invap.com.ar>"]
+
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
