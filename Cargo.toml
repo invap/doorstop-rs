@@ -9,6 +9,7 @@ repository= "https://github.com/invap/doorstop-rs"
 readme= "README.md"
 keywords=["Doorstop","Requirements", "Deserialization"]
 authors= ["Juan Ignacio Vaccarezza <jivaccarezza@invap.com.ar>"]
+documentation= "https://docs.rs/doorstop-rs"
 
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
