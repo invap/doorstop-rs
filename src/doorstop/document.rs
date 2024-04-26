@@ -129,7 +129,7 @@ pub struct Document {
     pub config: DocumentConfig,
     pub root_path: PathBuf,
     pub items: HashMap<Rc<String>, Rc<Item>>,
-    pub items_sorted_by_id: BTreeMap<Vec<i32>, Rc<Item>>,
+    pub items_sorted_by_level: BTreeMap<Vec<i32>, Rc<Item>>,
 }
 
 impl Document {
@@ -142,14 +142,14 @@ impl Document {
             config: document_config,
             root_path: path,
             items: id_item,
-            items_sorted_by_id: BTreeMap::new(),
+            items_sorted_by_level: BTreeMap::new(),
         };
 
         for each_item_path in doc.get_items_files() {
             let i = Rc::new(Item::new(each_item_path)?);
             let a = Rc::new(i.id.as_ref().unwrap().clone());
             doc.items.insert(a.clone(), i.clone());
-            doc.items_sorted_by_id.insert(i.get_level_key(), i);
+            doc.items_sorted_by_level.insert(i.get_level_key(), i);
         }
         Ok(doc)
     }
@@ -259,7 +259,7 @@ mod tests {
         let p = Path::new("resources/reqs/.doorstop.yml");
         let d = Document::new(p.to_path_buf()).unwrap();
         let level_stack = 0;
-        for (_, each_item) in d.items_sorted_by_id.iter() {
+        for (_, each_item) in d.items_sorted_by_level.iter() {
             println!("{},{:?}-{:?}", level_stack, each_item.level, each_item.id);
         }
     }

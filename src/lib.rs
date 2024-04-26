@@ -30,7 +30,7 @@ mod tests {
     fn test_build_tree() {
         let document_tree = DocumentTree::load("resources/reqs").unwrap();
         let root_document = &document_tree.borrow().document;
-        for (_, each_item) in root_document.items.iter() {
+        for (_, each_item) in root_document.items_sorted_by_level.iter() {
             let default_string_value = "N/A".to_string();
             println!(
                 "{}-({}){}",
