@@ -18,8 +18,8 @@
 
 use crate::doorstop::document::Document;
 use crate::doorstop::file;
-use walkdir::WalkDir;
 use thiserror::Error;
+use walkdir::WalkDir;
 
 use std::{cell::RefCell, collections::HashMap, error::Error, path::PathBuf, rc::Rc};
 
@@ -27,15 +27,17 @@ use std::{cell::RefCell, collections::HashMap, error::Error, path::PathBuf, rc::
 pub struct DocumentTree {
     pub document: Rc<Document>,
     pub children: Vec<Rc<RefCell<DocumentTree>>>,
+    ///Complete document tree index, k= document prefix, v= document tree
+    pub prefix_index: Rc<RefCell<HashMap<String, Rc<RefCell<DocumentTree>>>>>,
 }
 
-#[derive(Error,Debug)]
+#[derive(Error, Debug)]
 #[error("{msg}")]
 pub struct LoadError {
     msg: String,
 }
 
-impl DocumentTree  {
+impl DocumentTree {
     fn add_child(&mut self, child: Rc<RefCell<DocumentTree>>) {
         self.children.push(child);
     }
@@ -44,7 +46,7 @@ impl DocumentTree  {
         let ymls = find_document_yml(path);
         if ymls.len() == 0 {
             let s = "No documents found in ".to_string() + path;
-            return Err(Box::new(LoadError{msg: s}));
+            return Err(Box::new(LoadError { msg: s }));
         }
         build_doc_tree(ymls)
     }
@@ -52,8 +54,9 @@ impl DocumentTree  {
 
 fn build_doctree_index(
     paths: Vec<PathBuf>,
-) -> Result<HashMap<String, Rc<RefCell<DocumentTree>>>, Box<dyn Error>> {
-    let mut prefix_doc_map: HashMap<String, Rc<RefCell<DocumentTree>>> = HashMap::new();
+) -> Result<Rc<RefCell<HashMap<String, Rc<RefCell<DocumentTree>>>>>, Box<dyn Error>> {
+    let prefix_doc_map: Rc<RefCell<HashMap<String, Rc<RefCell<DocumentTree>>>>> =
+        Rc::new(RefCell::new(HashMap::new()));
 
     for each_path in paths {
         let doc = Document::new(each_path)?;
@@ -61,9 +64,10 @@ fn build_doctree_index(
         let each_tree = DocumentTree {
             document: Rc::new(doc),
             children: Vec::new(),
+            prefix_index: Rc::clone(&prefix_doc_map),
         };
 
-        prefix_doc_map.insert(
+        prefix_doc_map.borrow_mut().insert(
             each_tree.document.config.settings.prefix.clone(),
             Rc::new(RefCell::new(each_tree)),
         );
@@ -73,18 +77,18 @@ fn build_doctree_index(
 }
 
 fn build_doc_tree(paths: Vec<PathBuf>) -> Result<Rc<RefCell<DocumentTree>>, Box<dyn Error>> {
-
     let mut root: Option<Rc<RefCell<DocumentTree>>> = None;
     let prefix_doc_map = build_doctree_index(paths)?;
 
     //Go over all the documents if no parent is the root
-    for (_, value) in prefix_doc_map.iter() {
+    for (_, value) in prefix_doc_map.borrow().iter() {
         let doc_tree = (**value).borrow();
         let parent_prefix = &doc_tree.document.config.settings.parent;
 
         match parent_prefix {
             Some(p) => {
-                let parent = prefix_doc_map.get(p).unwrap();
+                let h = prefix_doc_map.borrow();
+                let parent = h.get(p).unwrap();
                 (**parent).borrow_mut().add_child(value.clone());
             }
             None => {
@@ -130,10 +134,25 @@ mod tests {
         assert_eq!(
             String::from("REQ"),
             document_tree.document.config.settings.prefix,
-            "testing CAUR is the root prefix"
+            "testing REQ is the root prefix"
         );
 
         assert_eq!(2, document_tree.children.len(), "Wrong amount of children");
+    }
+
+    #[test]
+    fn get_document_by_index() {
+        let document_tree = DocumentTree::load("resources/reqs").unwrap();
+        let document_tree = document_tree.borrow();
+
+        let h = document_tree.prefix_index.borrow();
+        let doc = h.get("TUT");
+        assert_eq!(
+            String::from("TUT"),
+            doc.unwrap().borrow().document.config.settings.prefix,
+            "testing REQ is the root prefix"
+        );
+
     }
 
     #[test]
